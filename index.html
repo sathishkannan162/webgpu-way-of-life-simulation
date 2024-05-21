@@ -7,11 +7,26 @@
   </head>
   <body>
     <canvas width="512" height="512"></canvas>
+    <img id="just-image" src="" />
+    <button id="download-image"></button>
+    <a id="download-link"></a>
     <script type="module">
       const GRID_SIZE = 32;
       const UPDATE_INTERVAL = 200;
       const WORKGROUP_SIZE = 8;
       const canvas = document.querySelector("canvas");
+
+      const button = document.getElementById("download-image");
+      const screenshot = document.getElementById("just-image");
+      const downloadLink = document.getElementById("download-link");
+
+      button.addEventListener("click", () => {
+        const dataURL = canvas.toDataURL("image/png");
+        screenshot.src = dataURL;
+        downloadLink.href = dataURL;
+        downloadLink.download = "image_1.png";
+        downloadLink.textContent = "Download Screenshot (image_1.png)";
+      });
 
       // Your WebGPU code will begin here!
       if (!navigator.gpu) {
