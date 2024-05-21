@@ -7,8 +7,9 @@
   </head>
   <body>
     <canvas width="512" height="512"></canvas>
-    <img id="just-image" src="" />
-    <button id="download-image"></button>
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording">Stop Recording</button>
+    <a id="downloadLink" download="canvas_video.webm">Download Video</a>
     <a id="download-link"></a>
     <script type="module">
       const GRID_SIZE = 32;
@@ -16,17 +17,12 @@
       const WORKGROUP_SIZE = 8;
       const canvas = document.querySelector("canvas");
 
-      const button = document.getElementById("download-image");
-      const screenshot = document.getElementById("just-image");
-      const downloadLink = document.getElementById("download-link");
+      const startRecordingButton = document.getElementById("startRecording");
+      const stopRecordingButton = document.getElementById("stopRecording");
+      const downloadLink = document.getElementById("downloadLink");
 
-      button.addEventListener("click", () => {
-        const dataURL = canvas.toDataURL("image/png");
-        screenshot.src = dataURL;
-        downloadLink.href = dataURL;
-        downloadLink.download = "image_1.png";
-        downloadLink.textContent = "Download Screenshot (image_1.png)";
-      });
+      let mediaRecorder;
+      let recordedChunks = [];
 
       // Your WebGPU code will begin here!
       if (!navigator.gpu) {
@@ -42,6 +38,31 @@
       context.configure({
         device: device,
         format: canvasFormat,
+      });
+
+      startRecordingButton.addEventListener("click", () => {
+        const FPS = Math.ceil(1000 / UPDATE_INTERVAL);
+        const stream = canvas.captureStream(FPS);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+        mediaRecorder.ondataavailable = function (event) {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = function () {
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
+          const url = URL.createObjectURL(blob);
+          downloadLink.href = url;
+          downloadLink.style.display = "block";
+        };
+
+        mediaRecorder.start();
+      });
+
+      stopRecordingButton.addEventListener("click", () => {
+        mediaRecorder.stop();
       });
 
       const vertices = new Float32Array([
